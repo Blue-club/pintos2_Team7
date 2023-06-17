@@ -3,6 +3,7 @@
 #include "threads/malloc.h"
 #include "vm/vm.h"
 #include "vm/inspect.h"
+#include "threads/mmu.h" // mmu 추가.
 
 /* Initializes the virtual memory subsystem by invoking each subsystem's
  * intialize codes. */
@@ -64,19 +65,23 @@ err:
 struct page *
 spt_find_page (struct supplemental_page_table *spt UNUSED, void *va UNUSED) {
 	struct page *page = NULL;
-	/* TODO: Fill this function. */
+	page = malloc(sizeof(struct page));		// page 의 크기만큼 동적할당해서 공간을 만들어줌.
+	
+	struct hash_elem *e;					// hash_elem 지정.
+	
+	page -> va = pg_round_down(va);			// 아래 offset 부분을 FFF으로 만들고 내림한 부분을 va으로 지정.
+	e = hash_find(&spt->spt_hash, &page->hash_elem);		// hash 테이블에서 hash_elem의 값을 찾으면
+	free(page);								// page는 이제 필요 없음.
 
-	return page;
+	return e != NULL ? hash_entry(e, struct page, hash_elem) : NULL;	// page가 존재한다면 hash에서 
 }
 
 /* Insert PAGE into spt with validation. */
 bool
 spt_insert_page (struct supplemental_page_table *spt UNUSED,
 		struct page *page UNUSED) {
-	int succ = false;
-	/* TODO: Fill this function. */
-
-	return succ;
+			// hash_elem을 넣으려고 했는데, 같은 게 있었으면 false 없었으면 true
+			return hash_insert(&spt->spt_hash, &page->hash_elem) == NULL ? true : false;
 }
 
 void
@@ -112,6 +117,13 @@ static struct frame *
 vm_get_frame (void) {
 	struct frame *frame = NULL;
 	/* TODO: Fill this function. */
+	void *kva = palloc_get_page(PAL_USER); 	// 유저 영역에 대해 물리메모리 페이지를 할당하고 그의 주소를 kva에 넣어준다.
+
+	if (kva == NULL)
+		PANIC("todo");
+	
+	frame = malloc(sizeof(struct frame));	// 핀토스의 커널 영역에서 frame만큼 할당함 (메모리를 단순화 유연성을 제공)
+	frame->kva = kva; 						// frame의 kva 맴버에 할당된 유저 영역의 메모리(kva)를 연결한다.
 
 	ASSERT (frame != NULL);
 	ASSERT (frame->page == NULL);
@@ -153,27 +165,39 @@ bool
 vm_claim_page (void *va UNUSED) {
 	struct page *page = NULL;
 	/* TODO: Fill this function */
-
+	/* 현재 스레드의 spt에서 va에 해당하는 값 찾기. */
+	page = spt_find_page(&thread_current()->spt, va);
+	if (page == NULL)
+		return false;
+	/* vm_do_claim_page */
 	return vm_do_claim_page (page);
 }
 
 /* Claim the PAGE and set up the mmu. */
 static bool
 vm_do_claim_page (struct page *page) {
+	/* user pool에서 새로운 physical page - frame이라 불림.(현재 frame->kva는 커널 영역에서 만든 page를 가리키고 있다.)를 가져온다. */
 	struct frame *frame = vm_get_frame ();
 
-	/* Set links */
+	/* Set links 페이지와 프레임 간의 연결을 설정하는 작업 */
 	frame->page = page;
 	page->frame = frame;
-
+	
 	/* TODO: Insert page table entry to map page's VA to frame's PA. */
+	struct thread *current = thread_current ();
+	bool writable = is_writable(current->pml4); // 오른쪽에서 2번째 비트 ex) 쓰기가능(0x00010)를 확인해서 쓰기 가능한지 확인한다.
+	/* PML4에 새로운 매핑을 추가하는 역할을 합니다. */
+	pml4_set_page(current->pml4, page->va, frame->kva, writable);
 
+	/* 스왑 인 */
 	return swap_in (page, frame->kva);
 }
 
 /* Initialize new supplemental page table */
 void
 supplemental_page_table_init (struct supplemental_page_table *spt UNUSED) {
+	/* hash 초기화하기. page_hash, page_less 함수를 넣어 초기화 */
+	hash_init(spt, page_hash, page_less, NULL);
 }
 
 /* Copy supplemental page table from src to dst */
@@ -187,4 +211,21 @@ void
 supplemental_page_table_kill (struct supplemental_page_table *spt UNUSED) {
 	/* TODO: Destroy all the supplemental_page_table hold by thread and
 	 * TODO: writeback all the modified contents to the storage. */
+}
+
+unsigned
+page_hash(const struct hash_elem *p_, void *aux UNUSED)
+{
+	const struct page *p = hash_entry(p_, struct page, hash_elem);
+	return hash_bytes(&p->va, sizeof(p->va));
+}
+
+bool
+page_less(const struct hash_elem *a_,
+	const struct hash_elem *b_, void *aux UNUSED)
+{
+	const struct page *a = hash_entry(a_, struct page, hash_elem);
+	const struct page *b = hash_entry(b_, struct page, hash_elem);
+
+	return a->va < b->va;
 }

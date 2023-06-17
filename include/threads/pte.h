@@ -18,7 +18,7 @@
  */
 
 #define PML4SHIFT 39UL
-#define PDPESHIFT 30UL
+#define PDPESHIFT 30UL //64비트로 캐스팅하고 30비트 시프팅.
 #define PDXSHIFT  21UL
 #define PTXSHIFT  12UL
 

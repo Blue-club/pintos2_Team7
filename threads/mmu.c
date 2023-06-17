@@ -28,6 +28,9 @@ pgdir_walk (uint64_t *pdp, const uint64_t va, int create) {
 	return NULL;
 }
 
+/* 주어진 가상 주소에 대한 페이지 테이블 엔트리의 주소를 반환합니다.
+	함수의 인자로는 페이지 디렉터리 포인터인 'pdpe'와 가상 주소 'va',
+	그리고 'create' 플래그가 전달됩니다. */
 static uint64_t *
 pdpe_walk (uint64_t *pdpe, const uint64_t va, int create) {
 	uint64_t *pte = NULL;
@@ -61,18 +64,19 @@ pdpe_walk (uint64_t *pdpe, const uint64_t va, int create) {
  * on CREATE.  If CREATE is true, then a new page table is
  * created and a pointer into it is returned.  Otherwise, a null
  * pointer is returned. */
+// 페이지를 단위별로 체크한다.
 uint64_t *
 pml4e_walk (uint64_t *pml4e, const uint64_t va, int create) {
 	uint64_t *pte = NULL;
-	int idx = PML4 (va);
+	int idx = PML4 (va); // 9비트로 구성되어 있기 때문이다. 최대 0~511개의 인덱스 (512개의 엔트리로 구성)
 	int allocated = 0;
 	if (pml4e) {
 		uint64_t *pdpe = (uint64_t *) pml4e[idx];
-		if (!((uint64_t) pdpe & PTE_P)) {
+		if (!((uint64_t) pdpe & PTE_P)) { // 페이지 테이블 엔트리가 유효하지 않으면, 
 			if (create) {
-				uint64_t *new_page = palloc_get_page (PAL_ZERO);
-				if (new_page) {
-					pml4e[idx] = vtop (new_page) | PTE_U | PTE_W | PTE_P;
+				uint64_t *new_page = palloc_get_page (PAL_ZERO); // 커널영역에 페이지를 만들고
+				if (new_page) { // 
+					pml4e[idx] = vtop (new_page) | PTE_U | PTE_W | PTE_P; // 페이지 디렉터리 포인터에 이 값들을 넣는다.
 					allocated = 1;
 				} else
 					return NULL;
@@ -236,9 +240,10 @@ pml4_set_page (uint64_t *pml4, void *upage, void *kpage, bool rw) {
 	ASSERT (is_user_vaddr (upage));
 	ASSERT (pml4 != base_pml4);
 
+	/* va에 해당하는 페이지 테이블 엔트리의 주소를 반환합니다. */
 	uint64_t *pte = pml4e_walk (pml4, (uint64_t) upage, 1);
 
-	if (pte)
+	if (pte) // 해당 가상 주소의 페이지 테이블 엔트리에 값을 설정합니다.
 		*pte = vtop (kpage) | PTE_P | (rw ? PTE_W : 0) | PTE_U;
 	return pte != NULL;
 }

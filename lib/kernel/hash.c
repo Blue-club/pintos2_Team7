@@ -25,14 +25,14 @@ bool
 hash_init (struct hash *h,
 		hash_hash_func *hash, hash_less_func *less, void *aux) {
 	h->elem_cnt = 0;
-	h->bucket_cnt = 4;
-	h->buckets = malloc (sizeof *h->buckets * h->bucket_cnt);
-	h->hash = hash;
-	h->less = less;
-	h->aux = aux;
+	h->bucket_cnt = 4; // 2의 거듭제곱의 값을 가져야 한다.
+	h->buckets = malloc (sizeof *h->buckets * h->bucket_cnt); // buckets의 크기 와 bucket_cnt 만큼 동적 할당을 한다. 
+	h->hash = hash; // hash에 page_hash(해쉬 함수) 즉 해당하는 가상주소를 리턴해주는 함수를 넣는다.
+	h->less = less; // less에 page_less(비교 함수) 즉 페이지의 가상주소 중 2번째(b) 가 더 크면 True를 리턴해주는 함수를 넣는다.
+	h->aux = aux; // 보조는 NULL
 
 	if (h->buckets != NULL) {
-		hash_clear (h, NULL);
+		hash_clear (h, NULL); // hash 초기화
 		return true;
 	} else
 		return false;
@@ -93,9 +93,9 @@ hash_insert (struct hash *h, struct hash_elem *new) {
 	struct list *bucket = find_bucket (h, new);
 	struct hash_elem *old = find_elem (h, bucket, new);
 
-	if (old == NULL)
+	if (old == NULL) // 같은 걸 찾았는데 없었으면 elem 추가.
 		insert_elem (h, bucket, new);
-
+	
 	rehash (h);
 
 	return old;
