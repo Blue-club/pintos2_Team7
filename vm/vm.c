@@ -6,6 +6,10 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
+#include "threads/mmu.h"
+#include "threads/thread.h"
+
+
 /* Initializes the virtual memory subsystem by invoking each subsystem's
  * intialize codes. */
 void vm_init (void) 
@@ -119,6 +123,15 @@ static struct frame * vm_get_frame (void)
 {
 	struct frame *frame = NULL;
 	/* TODO: Fill this function. */
+	void *kva = palloc_get_page(PAL_USER);
+	if (kva == NULL) // page 할당 실패
+		{
+			PANIC("todo");
+		}
+
+	frame = (struct frame *)malloc(sizeof(struct frame)); // 프레임 할당
+	frame->kva = kva;
+
 
 	ASSERT (frame != NULL);
 	ASSERT (frame->page == NULL);
@@ -161,6 +174,9 @@ bool vm_claim_page (void *va UNUSED)
 {
 	struct page *page = NULL;
 	/* TODO: Fill this function */
+	page = spt_find_page(&thread_current()->spt, va);
+	if (page == NULL)
+		return false;
 
 	return vm_do_claim_page (page);
 }
@@ -175,7 +191,11 @@ static bool vm_do_claim_page (struct page *page)
 	page->frame = frame;
 
 	/* TODO: Insert page table entry to map page's VA to frame's PA. */
+	// 가상 주소와 물리 주소를 매핑
+	struct thread *current = thread_current();
+	pml4_set_page(current->pml4, page->va, frame->kva, page->writable);
 
+	
 	return swap_in (page, frame->kva);
 }
 

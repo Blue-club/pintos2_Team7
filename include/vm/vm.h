@@ -2,6 +2,7 @@
 #define VM_VM_H
 #include <stdbool.h>
 #include "threads/palloc.h"
+#include "/home/ubuntu/pintos2_Team7/include/lib/kernel/hash.h"
 
 /*hash사용*/
 #include "hash.h"
@@ -54,7 +55,9 @@ struct page
 	struct frame *frame;   /* Back reference for frame */
 
 	/* Your implementation */
+	bool writable;
 	struct hash_elem hash_elem;
+
 
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
