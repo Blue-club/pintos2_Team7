@@ -205,6 +205,7 @@ void supplemental_page_table_init (struct supplemental_page_table *spt UNUSED)
 {
 	/*깃북 "Initializes the supplemental page table." */
 	/*hash table을 사용하는 이유 : pintos에서 hash 지원해줌*/
+	/*page_hash, page_less는 hash_init에서 포인터로 받기 때문에 함수 실행이 아니다*/
 	hash_init(&spt->spt_hash, page_hash, page_less, NULL);
 
 }
@@ -237,7 +238,8 @@ unsigned page_hash(const struct hash_elem *p_, void *aux UNUSED)
 }
 
 /* Returns true if page a precedes page b. */
-// a가 b보다 작으면 true, 반대면 false
+/*페이지의 순서 비교*/
+/*효율때문에?*/
 bool page_less(const struct hash_elem *a_, const struct hash_elem *b_, void *aux UNUSED)
 {
 	const struct page *a = hash_entry(a_, struct page, hash_elem);
