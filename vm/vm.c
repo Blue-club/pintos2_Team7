@@ -204,6 +204,7 @@ static bool vm_do_claim_page (struct page *page)
 void supplemental_page_table_init (struct supplemental_page_table *spt UNUSED) 
 {
 	/*깃북 "Initializes the supplemental page table." */
+	/*hash table을 사용하는 이유 : pintos에서 hash 지원해줌*/
 	hash_init(&spt->spt_hash, page_hash, page_less, NULL);
 
 }
@@ -222,13 +223,21 @@ void supplemental_page_table_kill (struct supplemental_page_table *spt UNUSED)
 }
 
 /* Returns a hash value for page p. */
+// 해시테이블 초기화 할때 해시 값을 구해주는 함수의 포인터
 unsigned page_hash(const struct hash_elem *p_, void *aux UNUSED)
 {
+	/*hash_elem은 prev와 next 값이 들어있으니 걔넬 포함하고있는 우리가 사용
+	하려고 하는 hash값을 찾는? 건가?*/
+	//hash_elem이 속한 페이지 주소알아냄
 	const struct page *p = hash_entry(p_, struct page, hash_elem);
+
+	/*그럼 hash_bytes가 hash func 이 되는건가?*/
+	//p의 해시값 반환
 	return hash_bytes(&p->va, sizeof p->va);
 }
 
 /* Returns true if page a precedes page b. */
+// a가 b보다 작으면 true, 반대면 false
 bool page_less(const struct hash_elem *a_, const struct hash_elem *b_, void *aux UNUSED)
 {
 	const struct page *a = hash_entry(a_, struct page, hash_elem);
