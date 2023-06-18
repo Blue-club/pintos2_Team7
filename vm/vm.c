@@ -70,17 +70,18 @@ struct page * spt_find_page (struct supplemental_page_table *spt UNUSED, void *v
 {
 	struct page *page = NULL;
 	/* TODO: Fill this function. */
-	page = (struct page *)malloc(sizeof(struct page));
-	struct hash_elem *e;
+	/*pg_round_down페이지 경계에 맞춰 반내림*/
+	/*ex) 0x00001234를 pg_round_down 하면 0x00001000으로, 페이지 크기나 정렬방식은 시스템의 페이지에 맞게 동작  */
+    struct page dummy_page; dummy_page.va = pg_round_down(va); // dummy for hashing
+    struct hash_elem *e;
 
-	// va에 해당하는 hash_elem 찾기
-	page->va = pg_round_down(va); // page의 시작 주소 할당
-	e = hash_find(&spt->spt_hash, &page->hash_elem);
-	free(page);
+	/* hash_elem 구조체를 e로 받아온다 */
+    e = hash_find(&spt->spt_hash, &dummy_page.hash_elem);
 
-	// 있으면 e에 해당하는 페이지 반환
-	return e != NULL ? hash_entry(e, struct page, hash_elem) : NULL;
+	if(e == NULL)
+		return NULL;
 
+    return page = hash_entry(e, struct page, hash_elem);
 }
 
 /* Insert PAGE into spt with validation. */
