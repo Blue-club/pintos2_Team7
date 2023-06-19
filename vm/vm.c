@@ -125,7 +125,7 @@ static struct frame * vm_get_victim (void)
 {
 	struct frame *victim = NULL;
 	 /* TODO: The policy for eviction is up to you. */
-
+	victim = list_entry(list_pop_front(&frame_table),struct frame, elem);
 	return victim;
 }
 
