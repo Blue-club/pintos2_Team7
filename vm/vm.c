@@ -147,6 +147,10 @@ static struct frame * vm_get_frame (void)
 {
 	struct frame *frame = NULL;
 	/* TODO: Fill this function. */
+	/*PAL_USER를 사용 하는 이유: 커널 풀 대신 사용자 풀에서 메모리를 할당하게 하기 위함.
+	사용자 풀의 페이지가 부족하면 사용자 프로그램의 페이지가 부족해지지만, 커널 풀의 페이지가 부족하면
+	많은 커널 함수들이 메모리를 확보하는데 문제가 생길수 잇음*/
+	
 	void *kva = palloc_get_page(PAL_USER);
 	if (kva == NULL) // page 할당 실패
 	{
