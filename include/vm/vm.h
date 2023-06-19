@@ -74,8 +74,9 @@ struct page
 /* The representation of "frame" */
 struct frame 
 {
-	void *kva;
+	void *kva;//kernel virtual address
 	struct page *page;
+	struct list_elem elem;
 };
 
 /* The function table for page operations.
