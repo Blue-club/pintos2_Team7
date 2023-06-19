@@ -91,6 +91,18 @@ bool spt_insert_page (struct supplemental_page_table *spt UNUSED, struct page *p
 	return hash_insert(&spt->spt_hash, &page->hash_elem) == NULL ? true : false; // 존재하지 않을 경우에만 삽입
 }
 
+bool delete_page (struct hash *pages, struct page *p)
+{
+	if (hash_delete(pages, &p->hash_elem))
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
 void spt_remove_page (struct supplemental_page_table *spt, struct page *page) 
 {
 	vm_dealloc_page (page);
@@ -126,9 +138,9 @@ static struct frame * vm_get_frame (void)
 	/* TODO: Fill this function. */
 	void *kva = palloc_get_page(PAL_USER);
 	if (kva == NULL) // page 할당 실패
-		{
-			frame = vm_evict_frame();
-		}
+	{
+		frame = vm_evict_frame();
+	}
 	else
 	{
 		frame = malloc(sizeof(struct frame));
