@@ -131,6 +131,8 @@ static struct frame * vm_get_victim (void)
 
 /* Evict one page and return the corresponding frame.
  * Return NULL on error.*/
+/*제거(evict)를 swap_out으로 하는건가?
+그럼 제거된게 아니니깐 다시 swap_in으로 불러올수있을지도?*/
 static struct frame * vm_evict_frame (void) 
 {
 	struct frame *victim UNUSED = vm_get_victim ();
@@ -201,6 +203,7 @@ void vm_dealloc_page (struct page *page)
 }
 
 /* Claim the page that allocate on VA. */
+//페이지를 va에 할당
 bool vm_claim_page (void *va UNUSED) 
 {
 	struct page *page = NULL;
@@ -213,6 +216,8 @@ bool vm_claim_page (void *va UNUSED)
 }
 
 /* Claim the PAGE and set up the mmu. */
+/*claim은 physical frame인 페이지를 할당?*/
+/*vm_get_frame을 호출,매핑*/
 static bool vm_do_claim_page (struct page *page) 
 {
 	struct frame *frame = vm_get_frame ();
@@ -223,11 +228,12 @@ static bool vm_do_claim_page (struct page *page)
 
 	/* TODO: Insert page table entry to map page's VA to frame's PA. */
 	// 가상 주소와 물리 주소를 매핑
-	struct thread *current = thread_current();
-	pml4_set_page(current->pml4, page->va, frame->kva, page->writable);
+	struct thread *cur = thread_current();
+	bool writable = page->writable;
+	pml4_set_page(cur->pml4, page->va, frame->kva, page->writable);
 
-	
-	return swap_in (page, frame->kva);
+	bool res = swap_in (page, frame->kva);
+	return res;
 }
 
 /* Initialize new supplemental page table */
