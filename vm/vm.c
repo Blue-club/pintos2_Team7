@@ -203,9 +203,15 @@ void vm_dealloc_page (struct page *page)
 }
 
 /* Claim the page that allocate on VA. */
-//페이지를 va에 할당
 bool vm_claim_page (void *va UNUSED) 
 {
+
+	//페이지를 va에 할당해라
+	//NULL인 페이지 구조체 포인터 가져왓음
+	//이 페이지를 va에 할당
+
+	//여기서 할당 준비 후 do_claim으로 보내서 페이지 테이블에 맵핑
+	//supplemental_page_table에서 찾기 구현을 여기서하면됨?
 	struct page *page = NULL;
 	/* TODO: Fill this function */
 	page = spt_find_page(&thread_current()->spt, va);
