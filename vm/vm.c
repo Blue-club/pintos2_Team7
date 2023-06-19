@@ -85,10 +85,21 @@ struct page * spt_find_page (struct supplemental_page_table *spt UNUSED, void *v
 }
 
 /* Insert PAGE into spt with validation. */
+/*깃북 : 주어진 supplemental page table에 struct page를 삽입하시오
+이 함수는 가상 주소가 주어진 supplemental page table에 존재하지 않는지 확인해야 합니다*/
 bool spt_insert_page (struct supplemental_page_table *spt UNUSED, struct page *page UNUSED) 
 {
+	int succ = false;
 	/* TODO: Fill this function. */
-	return hash_insert(&spt->spt_hash, &page->hash_elem) == NULL ? true : false; // 존재하지 않을 경우에만 삽입
+	// spt에 존재하지 않는지 확인?
+	struct hash_elem *e = hash_find(&spt->spt_hash, &page->hash_elem);
+	if(e != NULL)
+	{
+		return succ;
+	}
+	//page가 spt에 없으면 삽입
+	hash_insert(&spt->spt_hash, &page->hash_elem);
+	return succ = true;
 }
 
 bool delete_page (struct hash *pages, struct page *p)
