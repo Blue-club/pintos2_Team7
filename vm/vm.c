@@ -184,15 +184,59 @@ static bool vm_handle_wp (struct page *page UNUSED)
 }
 
 /* Return true on success */
-bool vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED, bool user UNUSED, bool write UNUSED, bool not_present UNUSED) 
-{
+bool
+vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
+		bool user UNUSED, bool write UNUSED, bool not_present UNUSED) {
 	struct supplemental_page_table *spt UNUSED = &thread_current ()->spt;
 	struct page *page = NULL;
 	/* TODO: Validate the fault */
 	/* TODO: Your code goes here */
 
-	return vm_do_claim_page (page);
+	// return vm_do_claim_page (page);
+
+	// Step 1. Locate the page that faulted in the supplemental page table
+	void * fpage_uvaddr = pg_round_down(addr); // round down to nearest PGSIZE
+	// void * fpage_uvaddr = (uint64_t)addr - ((uint64_t)addr%PGSIZE); // round down to nearest PGSIZE
+
+	struct page *fpage = spt_find_page(spt, fpage_uvaddr);
+	
+	// Invalid access - Not in SPT (stack growth or abort) / kernel vaddr / write request to read-only page
+	if(is_kernel_vaddr(addr)){
+
+		return false;
+	}
+	else if (fpage == NULL){
+		void *rsp = user ? f->rsp : thread_current()->rsp; // a page fault occurs in the kernel
+		const int GROWTH_LIMIT = 32; // heuristic
+		const int STACK_LIMIT = USER_STACK - (1<<20); // 1MB size limit on stack
+
+		// Check stack size max limit and stack growth request heuristically
+		if((uint64_t)addr > STACK_LIMIT && USER_STACK > (uint64_t)addr && (uint64_t)addr > (uint64_t)rsp - GROWTH_LIMIT){
+			vm_stack_growth (fpage_uvaddr);
+			fpage = spt_find_page(spt, fpage_uvaddr);
+		}
+		else{
+			exit(-1); // mmap-unmap
+			//return false;
+		}
+	}
+	else if(write && !fpage->writable){
+
+		exit(-1); // mmap-ro
+		// return false;
+	}
+
+	ASSERT(fpage != NULL);
+
+	// Step 2~4.
+	bool gotFrame = vm_do_claim_page (fpage);
+
+	// if (gotFrame)
+		// list_push_back(&frame_table, &fpage->frame->elem);
+
+	return gotFrame;
 }
+
 
 /* Free the page.
  * DO NOT MODIFY THIS FUNCTION. */
