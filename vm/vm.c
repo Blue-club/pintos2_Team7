@@ -127,15 +127,15 @@ static struct frame * vm_get_frame (void)
 	void *kva = palloc_get_page(PAL_USER);
 	if (kva == NULL) // page 할당 실패
 		{
-			PANIC("todo");
+			frame = vm_evict_frame();
 		}
-
-	frame = (struct frame *)malloc(sizeof(struct frame)); // 프레임 할당
-	frame->kva = kva;
-
+	else
+	{
+		frame = malloc(sizeof(struct frame));
+		frame->kva = kva;
+	}
 
 	ASSERT (frame != NULL);
-	ASSERT (frame->page == NULL);
 	return frame;
 }
 
