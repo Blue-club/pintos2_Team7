@@ -57,6 +57,7 @@ struct page
 	/* Your implementation */
 	bool writable;
 	struct hash_elem hash_elem;
+	int page_cnt; // only for file-mapped pages
 
 
 	/* Per-type data are binded into the union.
