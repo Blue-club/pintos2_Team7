@@ -48,6 +48,7 @@ struct page {
 
 	/* Your implementation */
 	struct hash_elem hash_elem;
+	bool writable; // 페이지가 쓰기 가능인지 변수 추가
 
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
@@ -118,5 +119,7 @@ page_hash(const struct hash_elem *p_, void *aux UNUSED);
 bool
 page_less(const struct hash_elem *a_,
 	const struct hash_elem *b_, void *aux UNUSED);
+
+void hash_page_destroy(struct hash_elem *e, void *aux); // 해쉬 페이지 삭제 함수.
 
 #endif  /* VM_VM_H */

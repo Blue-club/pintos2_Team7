@@ -45,7 +45,7 @@ uninit_new (struct page *page, void *va, vm_initializer *init,
 /* Initalize the page on first fault */
 static bool
 uninit_initialize (struct page *page, void *kva) {
-	struct uninit_page *uninit = &page->uninit;
+	struct uninit_page *uninit = &page->uninit;		// 여기에 위에 uninit_new한 함수를 넣는 듯 합니다.
 
 	/* Fetch first, page_initialize may overwrite the values */
 	vm_initializer *init = uninit->init;

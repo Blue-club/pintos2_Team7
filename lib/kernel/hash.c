@@ -94,9 +94,10 @@ hash_insert (struct hash *h, struct hash_elem *new) {
 	struct hash_elem *old = find_elem (h, bucket, new);
 
 	if (old == NULL) // 같은 걸 찾았는데 없었으면 elem 추가.
+	{
 		insert_elem (h, bucket, new);
-	
-	rehash (h);
+		rehash (h);
+	}
 
 	return old;
 }

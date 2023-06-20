@@ -345,9 +345,9 @@ intr_handler (struct intr_frame *frame) {
 		in_external_intr = true;
 		yield_on_return = false;
 	}
-
+	
 	/* Invoke the interrupt's handler. */
-	handler = intr_handlers[frame->vec_no];
+	handler = intr_handlers[frame->vec_no]; // 프레임의 vec_no가 14번인듯? 14번이어야 pagefault가 남. 즉. frame을 지정할 때 vec_no가 14로 지정되어 있어야함.
 	if (handler != NULL)
 		handler (frame);
 	else if (frame->vec_no == 0x27 || frame->vec_no == 0x2f) {

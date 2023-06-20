@@ -27,6 +27,7 @@ bytes_to_sectors (off_t size) {
 }
 
 /* In-memory inode. */
+/* 파일을 기술하는 디스크 상의 데이터 구조로서 파일의 데이터 블록이 디스크 상의 어느 주소에 위치하고 있는가와 같은 파일에 대한 중요한 정보를 갖고 있다. */
 struct inode {
 	struct list_elem elem;              /* Element in inode list. */
 	disk_sector_t sector;               /* Sector number of disk location. */

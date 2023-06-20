@@ -1,17 +1,33 @@
 #include <stdio.h>
 
-int main()
-{asdfsafkn;adfna;nf;
-    long num = 4613937818241073152;
-    long* ptr = &num;
-    long** dptr = &ptr;
-    long*** tptr = &dptr;
+void main()
+{
+    long num = 16;
+    long* ptr = &num; // 0x7fffffffe018
+    long** dptr = &ptr; // 0x7fffffffe020
+    long** a = &dptr; // 0x7fffffffe028
 
-    printf("\n abcd~~ abcd~~~ 0x%02X \n", *(long **)dptr);
-    printf("\n abcd~~ abcd~~~ 0x%02X \n", **(long **)dptr);
-    printf("\n abcd~~ abcd~~~ 0x%02X \n", **(long ***)dptr);
-    printf("\n abcd~~ abcd~~~ 0x%02X \n", ***(long ***)dptr);
+    long i = &dptr;
 
-    //int aList[10] = {1,2,3,4,5,6,7,8,9,10};
-    return 0;
+    printf("*ptr : %d\n", *ptr);
+    printf("ptr : %p\n", ptr);
+
+    printf("**a : %p\n", **a);
+    printf("a : %p\n", a);
+    ++a;
+    printf("++a : %p\n", a);
+    printf("i : %p\n", i);
+    printf("**(long **)i : %p\n", **(long **)i);
+
+    char* b = "bcde";
+
+    printf("b : %d\n",b);
+
+    ++b;
+    ++b;
+    
+    printf("b : %d\n",b);
+    printf("b : %s\n",b);
+
+    printf("b : %d\n",b);
 }
