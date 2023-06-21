@@ -2,6 +2,8 @@
 
 #include "vm/vm.h"
 #include "devices/disk.h"
+#include <string.h>
+
 
 /* DO NOT MODIFY BELOW LINE */
 static struct disk *swap_disk;
@@ -32,8 +34,6 @@ bool anon_initializer (struct page *page, enum vm_type type, void *kva) {
 
 	/* Set up the handler */
 	page->operations = &anon_ops;
-	struct anon_page *anon_page = &page->anon;
-
 	struct anon_page *anon_page = &page->anon;
 	anon_page->swap_sec = -1;
 	return true;
