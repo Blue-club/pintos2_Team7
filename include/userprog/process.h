@@ -33,4 +33,12 @@ void process_close_file (int);
 struct thread *get_child_process (pid_t);
 /* Project 2. */
 
+//p3
+struct lazy_load_arg
+{
+    struct file *file;
+    off_t ofs;
+    uint32_t read_bytes;
+    uint32_t zero_bytes;
+};
 #endif /* userprog/process.h */
