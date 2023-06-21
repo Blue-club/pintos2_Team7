@@ -2,7 +2,7 @@
 #define VM_VM_H
 #include <stdbool.h>
 #include "threads/palloc.h"
-#include "hash.h"
+#include "/home/ubuntu/pintos2_Team7/include/lib/kernel/hash.h"
 #include "threads/mmu.h"
 
 //p3
