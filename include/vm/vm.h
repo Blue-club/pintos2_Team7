@@ -4,6 +4,9 @@
 #include "threads/palloc.h"
 #include "hash.h"
 
+//p3
+#include "threads/vaddr.h"
+
 
 enum vm_type {
 	/* page not initialized */

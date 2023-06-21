@@ -62,11 +62,20 @@ err:
 
 /* Find VA from spt and return page. On error, return NULL. */
 struct page *
-spt_find_page (struct supplemental_page_table *spt UNUSED, void *va UNUSED) {
+spt_find_page(struct supplemental_page_table *spt UNUSED, void *va UNUSED)
+{
 	struct page *page = NULL;
 	/* TODO: Fill this function. */
+	page = (struct page *)malloc(sizeof(struct page));
+	struct hash_elem *e;
 
-	return page;
+	// va에 해당하는 hash_elem 찾기
+	page->va = pg_round_down(va); // page의 시작 주소 할당
+	e = hash_find(&spt->spt_hash, &page->hash_elem);
+	free(page);
+
+	// 있으면 e에 해당하는 페이지 반환
+	return e != NULL ? hash_entry(e, struct page, hash_elem) : NULL;
 }
 
 /* Insert PAGE into spt with validation. */
