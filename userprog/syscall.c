@@ -114,13 +114,33 @@ syscall_handler (struct intr_frame *f UNUSED) {
 	}
 }
 
-void check_address(void *addr){
-	if (addr == NULL)
+void check_address(void *addr)
+{
+	
+	struct thread *curr = thread_current();
+	// if (user_addr = NULL || !(is_user_vaddr(user_addr)) || pml4_get_page(curr->pml4, user_addr) == NULL) {
+	if (addr == NULL || !(is_user_vaddr(addr))) { /* P3 수정 */
 		exit(-1);
-	if (!is_user_vaddr(addr))
-		exit(-1);
-	if (pml4_get_page(thread_current()->pml4, addr) == NULL)
-		exit(-1);
+	}
+	
+	
+	
+	
+	// if (addr == NULL)
+	// 	exit(-1);
+	// if (!is_user_vaddr(addr))
+	// 	exit(-1);	
+	
+	
+	
+	// if (addr == NULL)
+	// 	exit(-1);
+	// if (!is_user_vaddr(addr))
+	// 	exit(-1);
+	// if (pml4_get_page(thread_current()->pml4, addr) == NULL)
+	// 	exit(-1);
+
+
 	// if (addr == NULL || !(is_user_vaddr(addr))||pml4_get_page(cur->pml4, addr) == NULL){
 	// 	exit(-1);
 	// }
