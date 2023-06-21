@@ -755,16 +755,36 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 }
 
 /* Create a PAGE of stack at the USER_STACK. Return true on success. */
-static bool setup_stack (struct intr_frame *if_) 
+static bool
+setup_stack(struct intr_frame *if_)
 {
-	
 	bool success = false;
-	void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
+	void *stack_bottom = (void *)(((uint8_t *)USER_STACK) - PGSIZE);
 
 	/* TODO: Map the stack on stack_bottom and claim the page immediately.
 	 * TODO: If success, set the rsp accordingly.
 	 * TODO: You should mark the page is stack. */
 	/* TODO: Your code goes here */
+
+	// No need to load lazily
+
+	// Q. anon page로 init? - 어떻게 하지
+	// 바로 anon page 만드는게 아니라, vm_alloc_page 호출해서 unint page 만든 후, 바로 vm_claim_page해서 frame 할당 해주기
+	
+	vm_alloc_page(VM_ANON | VM_MARKER_0, stack_bottom, true); // Create uninit page for stack; will become anon page
+	success = vm_claim_page(stack_bottom); // find page corresponding to user vaddr 'stack_bottom' and get frame mapped
+	if (success){
+		if_->rsp = USER_STACK; //setting rsp
+
+		#ifdef DEBUG_VM
+		struct supplemental_page_table *spt = &thread_current ()->spt;
+		struct page * stack_bottom_page = spt_find_page (spt, stack_bottom);
+		printf("First stack page - %p\n\n", stack_bottom_page->va);
+		#endif
+	}
+	else{
+		printf("Failed on setup_stack\n\n");
+	}
 
 	return success;
 }
