@@ -100,12 +100,16 @@ syscall_handler (struct intr_frame *f) {
 	}
 }
 
-void
-check_address(void *addr) {
-	if (is_kernel_vaddr (addr) || addr == NULL || pml4_get_page (thread_current ()->pml4, addr) == NULL) {
-		exit (-1);
-	}
+void check_address(void *addr)
+{
+	if (addr == NULL)
+		exit(-1);
+	if (!is_user_vaddr(addr))
+		exit(-1);
+	// if (pml4_get_page(thread_current()->pml4, addr) == NULL)
+	// 	exit(-1);
 }
+
 
 void
 halt (void) {
