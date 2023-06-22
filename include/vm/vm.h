@@ -71,6 +71,8 @@ struct page {
 struct frame {
 	void *kva;
 	struct page *page;
+	struct list_elem frame_elem; // frame_table을 위한 list_elem
+
 };
 
 /* The function table for page operations.
@@ -123,4 +125,7 @@ enum vm_type page_get_type (struct page *page);
 //p3
 unsigned page_hash(const struct hash_elem *p_, void *aux UNUSED);
 bool page_less(const struct hash_elem *a_, const struct hash_elem *b_, void *aux UNUSED);
+struct lock frame_table_lock;
+struct list frame_table;
+
 #endif  /* VM_VM_H */
