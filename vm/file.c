@@ -58,12 +58,12 @@ file_backed_destroy(struct page *page)
 {
 	// todo: 관련된 파일을 닫음으로써 file-backed page를 파괴합니다.
 	// todo: 내용이 변경되었다면(dirty) 변경 사항을 파일에 기록해야 합니다.
-
 	if (pml4_is_dirty(thread_current()->pml4, page->va))
 	{
 		file_write_at(page->file.file, page->va, page->file.read_bytes, page->file.ofs);
 		pml4_set_dirty(thread_current()->pml4, page->va, 0);
 	}
+	hash_delete(&thread_current()->spt.spt_hash, &page->hash_elem);
 	pml4_clear_page(thread_current()->pml4, page->va);
 
 	// page struct를 해제할 필요가 없습니다. (file_backed_destroy의 호출자가 해야 함)
@@ -123,14 +123,13 @@ do_mmap(void *addr, size_t length, int writable,
 /* Do the munmap */
 void do_munmap(void *addr)
 {
-
 	struct supplemental_page_table *spt = &thread_current()->spt;
 	struct page *p = spt_find_page(spt, addr);
 	int count = p->mapped_page_count;
 	for (int i = 0; i < count; i++)
 	{
 		if (p)
-			destroy(p);
+			spt_remove_page(spt, p);
 
 		addr += PGSIZE;
 		p = spt_find_page(spt, addr);

@@ -3,7 +3,7 @@
 #include "threads/malloc.h"
 #include "vm/vm.h"
 #include "vm/inspect.h"
-
+#include "userprog/process.h"
 
 //p3
 #include "threads/thread.h"
@@ -310,7 +310,6 @@ bool supplemental_page_table_copy(struct supplemental_page_table *dst UNUSED,
 		enum vm_type type = src_page->operations->type;
 		void *upage = src_page->va;
 		bool writable = src_page->writable;
-
 		/* 1) type이 uninit이면 */
 		if (type == VM_UNINIT)
 		{ // uninit page 생성 & 초기화
@@ -320,16 +319,29 @@ bool supplemental_page_table_copy(struct supplemental_page_table *dst UNUSED,
 			continue;
 		}
 
-		/* 2) type이 uninit이 아니면 */
+		/* 2) type이 file이면 */
+		if (type == VM_FILE)
+		{
+			struct lazy_load_arg *file_aux = malloc(sizeof(struct lazy_load_arg));
+			file_aux->file = src_page->file.file;
+			file_aux->ofs = src_page->file.ofs;
+			file_aux->read_bytes = src_page->file.read_bytes;
+			if (!vm_alloc_page_with_initializer(type, upage, writable, NULL, file_aux))
+				return false;
+			struct page *file_page = spt_find_page(dst, upage);
+			file_backed_initializer(file_page, type, NULL);
+			pml4_set_page(thread_current()->pml4, file_page->va, src_page->frame->kva, src_page->writable);
+			continue;
+		}
+
+		/* 3) type이 anon이면 */
 		if (!vm_alloc_page_with_initializer(type, upage, writable, NULL, NULL)) // uninit page 생성 & 초기화
 			// init(lazy_load_segment)는 page_fault가 발생할때 호출됨
 			// 지금 만드는 페이지는 page_fault가 일어날 때까지 기다리지 않고 바로 내용을 넣어줘야 하므로 필요 없음
 			return false;
-
 		// vm_claim_page으로 요청해서 매핑 & 페이지 타입에 맞게 초기화
 		if (!vm_claim_page(upage))
 			return false;
-
 		// 매핑된 프레임에 내용 로딩
 		struct page *dst_page = spt_find_page(dst, upage);
 		memcpy(dst_page->frame->kva, src_page->frame->kva, PGSIZE);
