@@ -20,6 +20,7 @@
 #include "intrinsic.h"
 #ifdef VM
 #include "vm/vm.h"
+#include "userprog/syscall.h"
 #endif
 
 static void process_cleanup (void);
@@ -93,7 +94,7 @@ process_fork (const char *name, struct intr_frame *if_) {
 	sema_down (&child->load_sema);
 
 	if (child->exit_status == TID_ERROR) {
-		sema_up(&child->exit_sema);
+		// sema_up(&child->exit_sema);
 		return TID_ERROR;
 	}
 	return tid;
@@ -147,57 +148,59 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
  *       That is, you are required to pass second argument of process_fork to
  *       this function. */
 static void
-__do_fork (void *aux) {
+__do_fork(void *aux)
+{
 	struct intr_frame if_;
 	struct thread *parent = (struct thread *)aux;
-	struct thread *current = thread_current ();
-	/* Project 2. */
+	struct thread *current = thread_current();
+	/* TODO: somehow pass the parent_if. (i.e. process_fork()'s if_) */
 	struct intr_frame *parent_if = &parent->parent_if;
 	bool succ = true;
-
 	/* 1. Read the cpu context to local stack. */
-	memcpy (&if_, parent_if, sizeof (struct intr_frame));
-
-	/* Project 2. */
-	if_.R.rax = 0;
-
+	memcpy(&if_, parent_if, sizeof(struct intr_frame));
+	if_.R.rax = 0; // 자식 프로세스의 리턴값은 0
 	/* 2. Duplicate PT */
-	current->pml4 = pml4_create ();
+	current->pml4 = pml4_create();
 	if (current->pml4 == NULL)
 		goto error;
-
-	process_activate (current);
+	process_activate(current);
 #ifdef VM
 	supplemental_page_table_init(&current->spt);
 	if (!supplemental_page_table_copy(&current->spt, &parent->spt))
 		goto error;
 #else
-	if (!pml4_for_each (parent->pml4, duplicate_pte, parent))
+	if (!pml4_for_each(parent->pml4, duplicate_pte, parent))
 		goto error;
 #endif
-
-	/* Project 2. */
-	for (int i = 0; i < FDT_COUNT_LIMIT; i++) {
+	/* TODO: Your code goes here.
+	 * TODO: Hint) To duplicate the file object, use `file_duplicate`
+	 * TODO:       in include/filesys/file.h. Note that parent should not return
+	 * TODO:       from the fork() until this function successfully duplicates
+	 * TODO:       the resources of parent.*/
+	// FDT 복사
+	for (int i = 0; i < FDT_COUNT_LIMIT; i++)
+	{
 		struct file *file = parent->fdt[i];
 		if (file == NULL)
 			continue;
 		if (file > 2)
-			file = file_duplicate (file);
+			file = file_duplicate(file);
 		current->fdt[i] = file;
 	}
 	current->next_fd = parent->next_fd;
 
-	sema_up (&current->load_sema);
-	/* Project 2. */
-
-	process_init ();
+	// 로드가 완료될 때까지 기다리고 있던 부모 대기 해제
+	lock_acquire(&filesys_lock);
+	sema_up(&current->load_sema);
+	lock_release(&filesys_lock);
+	process_init();
 
 	/* Finally, switch to the newly created process. */
 	if (succ)
-		do_iret (&if_);
+		do_iret(&if_);
 error:
-	sema_up (&current->load_sema);
-	exit (TID_ERROR);
+	sema_up(&current->load_sema);
+	exit(TID_ERROR);
 }
 
 /* Project 2. */

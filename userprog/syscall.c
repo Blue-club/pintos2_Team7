@@ -15,6 +15,7 @@
 #include "filesys/filesys.h"
 #include "filesys/file.h"
 #include "devices/input.h"
+#include "vm/vm.h"
 /* Project 2. */
 
 void syscall_entry (void);
@@ -205,6 +206,13 @@ read (int fd, void *buffer, unsigned size) {
 		if (file == NULL) {
 			lock_release (&filesys_lock);
 			return -1;
+		}
+
+		struct page *page = spt_find_page(&thread_current()->spt, buffer);
+		if (page && !page->writable)
+		{
+			lock_release(&filesys_lock);
+			exit(-1);
 		}
 
 		bytes_read = file_read (file, buffer, size);
