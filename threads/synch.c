@@ -236,7 +236,7 @@ lock_release (struct lock *lock) {
 	ASSERT (lock_held_by_current_thread (lock));
 
 	/*--- priority donation ---*/
-  	remove_with_lock(lock);
+  	remove_donor(lock);
   	refresh_priority();
   	/*--- priority donation ---*/
 
@@ -378,15 +378,26 @@ donate_priority(void) {
     }
 }
 
-void
-remove_with_lock (struct lock *lock) {
-  struct thread *cur = thread_current ();
+void remove_donor(struct lock *lock)
+{
+	struct list *donations = &(thread_current()->donations); // 현재 스레드의 donations
+	struct list_elem *donor_elem;							 // 현재 스레드의 donations의 요소
+	struct thread *donor_thread;
 
-  for (struct list_elem *e = list_begin (&cur->donations); e != list_end (&cur->donations); e = list_next (e)) {
-    struct thread *t = list_entry (e, struct thread, donation_elem);
-    if (t->wait_on_lock == lock)
-      list_remove (&t->donation_elem);
-  }
+	if (list_empty(donations))
+		return;
+
+	donor_elem = list_front(donations);
+
+	while (1)
+	{
+		donor_thread = list_entry(donor_elem, struct thread, donation_elem);
+		donor_elem = list_next(donor_elem);
+		if (donor_thread->wait_on_lock == lock)		   // 현재 release될 lock을 기다리던 스레드라면
+			list_remove(&donor_thread->donation_elem); // 목록에서 제거
+		if (donor_elem == list_end(donations))
+			return;
+	}
 }
 
 void
