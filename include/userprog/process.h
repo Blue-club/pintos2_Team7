@@ -18,6 +18,7 @@ typedef int off_t;
 #define EXIT_SUCCESS 0          /* Successful execution. */
 #define EXIT_FAILURE 1          /* Unsuccessful execution. */
 
+bool lazy_load_segment(struct page *page, void *aux);
 tid_t process_create_initd (const char *);
 tid_t process_fork (const char *, struct intr_frame *);
 int process_exec (void *);

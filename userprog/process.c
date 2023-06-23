@@ -200,9 +200,9 @@ __do_fork(void *aux)
 	current->next_fd = parent->next_fd;
 
 	// 로드가 완료될 때까지 기다리고 있던 부모 대기 해제
-	lock_acquire(&filesys_lock);
+	// lock_acquire(&filesys_lock);
 	sema_up(&current->load_sema);
-	lock_release(&filesys_lock);
+	// lock_release(&filesys_lock);
 	process_init();
 
 	/* Finally, switch to the newly created process. */
@@ -267,8 +267,9 @@ process_exec (void *f_name) {
 	process_cleanup ();
 
 	/* And then load the binary */
+	lock_acquire(&filesys_lock);
 	success = load (file_name, &_if);
-	
+	lock_release(&filesys_lock);
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
 	if (!success)
@@ -696,7 +697,7 @@ install_page (void *upage, void *kpage, bool writable) {
  * If you want to implement the function for only project 2, implement it on the
  * upper block. */
 
-static bool
+bool
 lazy_load_segment (struct page *page, void *aux) {
 	/* TODO: Load the segment from the file */
 	/* TODO: This called when the first page fault occurs on address VA. */
