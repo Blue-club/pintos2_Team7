@@ -54,7 +54,9 @@ syscall_init (void) {
 void
 syscall_handler (struct intr_frame *f) {
 	int syscall_n = f->R.rax;
-
+#ifdef VM
+	thread_current()->rsp = f->rsp;
+#endif
 	switch (syscall_n) {
 		case SYS_HALT:
 			halt ();
