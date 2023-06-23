@@ -80,24 +80,34 @@ initd (void *f_name) {
 /* Project 2. */
 /* Clones the current process as `name`. Returns the new process's thread id, or
  * TID_ERROR if the thread cannot be created. */
-tid_t
-process_fork (const char *name, struct intr_frame *if_) {
+tid_t process_fork(const char *name, struct intr_frame *if_ UNUSED)
+{
 	/* Clone current thread to new thread.*/
-	struct thread *curr = thread_current ();
-	memcpy (&curr->parent_if, if_, sizeof (struct intr_frame));
-
-	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, curr);
-	if (tid == TID_ERROR)
+	// 현재 스레드의 parent_if에 복제해야 하는 if를 복사한다.
+	struct thread *cur = thread_current();
+	memcpy(&cur->parent_if, if_, sizeof(struct intr_frame));
+	// 현재 스레드를 fork한 new 스레드를 생성한다.
+	tid_t pid = thread_create(name, PRI_DEFAULT, __do_fork, cur);
+	if (pid == TID_ERROR)
 		return TID_ERROR;
-
-	struct thread *child = get_child_process (tid);
-	sema_down (&child->load_sema);
-
-	if (child->exit_status == TID_ERROR) {
+	// 자식이 로드될 때까지 대기하기 위해서 방금 생성한 자식 스레드를 찾는다.
+	struct thread *child = get_child_process(pid);
+	// 현재 스레드는 생성만 완료된 상태이다. 생성되어서 ready_list에 들어가고 실행될 때 __do_fork 함수가 실행된다.
+	// __do_fork 함수가 실행되어 로드가 완료될 때까지 부모는 대기한다.
+	sema_down(&child->load_sema);
+	// 자식이 로드되다가 오류로 exit한 경우
+	if (child->exit_status == TID_ERROR)
+	{
+		// 자식이 종료되었으므로 자식 리스트에서 제거한다.
+		// 이거 넣으면 간헐적으로 실패함 (syn-read)
+		// list_remove(&child->child_elem);
+		// 자식이 완전히 종료되고 스케줄링이 이어질 수 있도록 자식에게 signal을 보낸다.
 		// sema_up(&child->exit_sema);
+		// 자식 프로세스의 pid가 아닌 TID_ERROR를 반환한다.
 		return TID_ERROR;
 	}
-	return tid;
+	// 자식 프로세스의 pid를 반환한다.
+	return pid;
 }
 
 #ifndef VM

@@ -181,44 +181,43 @@ filesize (int fd) {
 	return file_length (file);
 }
 
-int
-read (int fd, void *buffer, unsigned size) {
-	check_address (buffer);
-	lock_acquire (&filesys_lock);
-
+int read(int fd, void *buffer, unsigned size)
+{
+	check_address(buffer);
 	char *ptr = (char *)buffer;
 	int bytes_read = 0;
-
-	if (fd == STDIN_FILENO) {
-		for (int i = 0; i < size; i++) {
-			*ptr++ = input_getc ();
+	lock_acquire(&filesys_lock);
+	if (fd == STDIN_FILENO)
+	{
+		for (int i = 0; i < size; i++)
+		{
+			*ptr++ = input_getc();
 			bytes_read++;
 		}
-		lock_release (&filesys_lock);
+		lock_release(&filesys_lock);
 	}
-	else {
-		if (fd < 2) {
-			lock_release (&filesys_lock);
+	else
+	{
+		if (fd < 2)
+		{
+			lock_release(&filesys_lock);
 			return -1;
 		}
-
-		struct file *file = process_get_file (fd);
-		if (file == NULL) {
-			lock_release (&filesys_lock);
+		struct file *file = process_get_file(fd);
+		if (file == NULL)
+		{
+			lock_release(&filesys_lock);
 			return -1;
 		}
-
 		struct page *page = spt_find_page(&thread_current()->spt, buffer);
 		if (page && !page->writable)
 		{
 			lock_release(&filesys_lock);
 			exit(-1);
 		}
-
-		bytes_read = file_read (file, buffer, size);
-		lock_release (&filesys_lock);
+		bytes_read = file_read(file, buffer, size);
+		lock_release(&filesys_lock);
 	}
-
 	return bytes_read;
 }
 
